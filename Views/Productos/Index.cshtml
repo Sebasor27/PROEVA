@@ -1,0 +1,212 @@
+@using proeva.Dto
+@model IEnumerable<ProductoDto>
+
+<h2>Productos</h2>
+
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProductModal">
+    Crear Nuevo Producto
+</button>
+
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Nombre</td>
+                <td>@item.Precio.ToString("C")</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-warning" 
+                            data-bs-toggle="modal" data-bs-target="#editProductModal"
+                            data-id="@item.Id" data-nombre="@item.Nombre" data-precio="@item.Precio">
+                        Editar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-info" 
+                            data-bs-toggle="modal" data-bs-target="#detailsProductModal"
+                            data-id="@item.Id" data-nombre="@item.Nombre" data-precio="@item.Precio">
+                        Detalles
+                    </button>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal para crear producto -->
+<div class="modal fade" id="createProductModal" tabindex="-1" aria-labelledby="createProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createProductModalLabel">Crear Nuevo Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createProductForm" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group mb-3">
+                        <label for="Nombre" class="form-label">Nombre</label>
+                        <input type="text" id="Nombre" name="Nombre" class="form-control" required />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Nombre" data-valmsg-replace="true"></span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="Precio" class="form-label">Precio</label>
+                        <input type="number" step="0.01" id="Precio" name="Precio" class="form-control" required min="0.01" />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Precio" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar producto -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProductModalLabel">Editar Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editProductForm" asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="edit_Id" name="Id" />
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group mb-3">
+                        <label for="edit_Nombre" class="form-label">Nombre</label>
+                        <input type="text" id="edit_Nombre" name="Nombre" class="form-control" required />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Nombre" data-valmsg-replace="true"></span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="edit_Precio" class="form-label">Precio</label>
+                        <input type="number" step="0.01" id="edit_Precio" name="Precio" class="form-control" required min="0.01" />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Precio" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalles del producto -->
+<div class="modal fade" id="detailsProductModal" tabindex="-1" aria-labelledby="detailsProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsProductModalLabel">Detalles del Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row">
+                    <dt class="col-sm-4">ID:</dt>
+                    <dd class="col-sm-8" id="details_Id"></dd>
+                    
+                    <dt class="col-sm-4">Nombre:</dt>
+                    <dd class="col-sm-8" id="details_Nombre"></dd>
+                    
+                    <dt class="col-sm-4">Precio:</dt>
+                    <dd class="col-sm-8" id="details_Precio"></dd>
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Configuración para manejar el formulario de creación
+            $('#createProductForm').submit(function (e) {
+                e.preventDefault();
+                submitForm($(this), function() {
+                    $('#createProductModal').modal('hide');
+                    location.reload();
+                });
+            });
+
+            // Configuración para manejar el formulario de edición
+            $('#editProductForm').submit(function (e) {
+                e.preventDefault();
+                submitForm($(this), function() {
+                    $('#editProductModal').modal('hide');
+                    location.reload();
+                });
+            });
+
+            // Función genérica para enviar formularios
+            function submitForm(form, onSuccess) {
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            onSuccess();
+                        } else {
+                            handleErrors(response);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert('Error al procesar la solicitud: ' + xhr.statusText);
+                    }
+                });
+            }
+
+            // Manejo de errores
+            function handleErrors(response) {
+                if (response.errors) {
+                    $('[data-valmsg-for]').text('');
+                    $.each(response.errors, function (key, value) {
+                        if (value) {
+                            $('[data-valmsg-for="' + key + '"]').text(value);
+                        }
+                    });
+                }
+                if (response.message) {
+                    alert(response.message);
+                }
+            }
+
+            // Evento para cargar datos en el modal de edición
+            $('#editProductModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                $('#edit_Id').val(button.data('id'));
+                $('#edit_Nombre').val(button.data('nombre'));
+                $('#edit_Precio').val(button.data('precio'));
+            });
+
+            // Evento para cargar datos en el modal de detalles
+            $('#detailsProductModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                $('#details_Id').text(button.data('id'));
+                $('#details_Nombre').text(button.data('nombre'));
+                $('#details_Precio').text('$' + parseFloat(button.data('precio')).toFixed(2));
+            });
+
+            // Limpiar modales al cerrar
+            $('.modal').on('hidden.bs.modal', function () {
+                $(this).find('form')[0].reset();
+                $(this).find('.text-danger').text('');
+            });
+        });
+    </script>
+}

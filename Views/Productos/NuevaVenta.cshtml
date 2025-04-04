@@ -1,0 +1,318 @@
+@using proeva.ViewModels
+@model VentaViewModel
+
+<h2>Nueva Venta</h2>
+
+<form id="ventaForm">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="clienteSearch">Buscar Cliente</label>
+                <div class="input-group">
+                    <input type="text" id="clienteSearch" class="form-control" placeholder="Nombre o correo del cliente">
+                    <button class="btn btn-outline-secondary" type="button" id="btnBuscarCliente">Buscar</button>
+                </div>
+                <div id="clienteResults" class="list-group mt-2" style="display:none;"></div>
+            </div>
+            
+            <div class="form-group mt-3">
+                <label for="clienteNombre">Cliente Seleccionado</label>
+                <input type="text" id="clienteNombre" class="form-control" readonly>
+                <input type="hidden" asp-for="Pedido.ClienteId" id="clienteId">
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Pedido.MetodoPagoId">Método de Pago</label>
+                <select asp-for="Pedido.MetodoPagoId" class="form-control" asp-items="@(new SelectList(Model.MetodosPago, "Id", "Metodo"))">
+                    <option value="">Seleccione método de pago</option>
+                </select>
+                <span asp-validation-for="Pedido.MetodoPagoId" class="text-danger"></span>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="clienteDireccion">Dirección</label>
+                <input type="text" id="clienteDireccion" class="form-control" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label for="clienteCorreo">Correo Electrónico</label>
+                <input type="email" id="clienteCorreo" class="form-control" readonly>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="form-group">
+                <label for="productoSearch">Buscar Producto</label>
+                <div class="input-group">
+                    <input type="text" id="productoSearch" class="form-control" placeholder="Nombre o código del producto">
+                    <button class="btn btn-outline-secondary" type="button" id="btnBuscarProducto">Buscar</button>
+                </div>
+                <div id="productoResults" class="list-group mt-2" style="display:none;"></div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label for="productoCantidad">Cantidad</label>
+                <input type="number" id="productoCantidad" class="form-control" min="1" value="1">
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label for="productoPrecio">Precio Unitario</label>
+                <input type="number" step="0.01" id="productoPrecio" class="form-control" min="0.01">
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <button type="button" id="btnAgregarProducto" class="btn btn-primary">Agregar Producto</button>
+    </div>
+
+    <h4>Detalles de la Venta</h4>
+    <table class="table" id="detallesTable">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Los productos se agregarán aquí dinámicamente -->
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                <td id="totalVenta">$0.00</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="form-group mt-4">
+        <button type="submit" class="btn btn-success">Procesar Venta</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Variables para manejar los detalles
+            let detalles = [];
+            let nextIndex = 0;
+
+            // Buscar clientes
+            $('#clienteSearch').on('keyup', function (e) {
+                if (e.key === 'Enter') {
+                    buscarClientes();
+                }
+            });
+
+            $('#btnBuscarCliente').click(buscarClientes);
+
+            function buscarClientes() {
+                const term = $('#clienteSearch').val();
+                if (term.length < 2) return;
+
+                $.get('/Ventas/BuscarClientes', { term: term }, function (data) {
+                    const results = $('#clienteResults');
+                    results.empty();
+                    
+                    if (data.length === 0) {
+                        results.append('<div class="list-group-item">No se encontraron clientes</div>');
+                    } else {
+                        data.forEach(cliente => {
+                            const item = $(`
+                                <button type="button" class="list-group-item list-group-item-action" 
+                                        data-id="${cliente.id}" 
+                                        data-nombre="${cliente.nombre}"
+                                        data-direccion="${cliente.direccion}"
+                                        data-correo="${cliente.correo}">
+                                    ${cliente.nombre} - ${cliente.correo}
+                                </button>
+                            `);
+                            item.click(function() {
+                                seleccionarCliente(cliente);
+                                results.hide();
+                            });
+                            results.append(item);
+                        });
+                    }
+                    results.show();
+                });
+            }
+
+            function seleccionarCliente(cliente) {
+                $('#clienteId').val(cliente.id);
+                $('#clienteNombre').val(cliente.nombre);
+                $('#clienteDireccion').val(cliente.direccion);
+                $('#clienteCorreo').val(cliente.correo);
+                $('#clienteSearch').val('');
+            }
+
+            // Buscar productos
+            $('#productoSearch').on('keyup', function (e) {
+                if (e.key === 'Enter') {
+                    buscarProductos();
+                }
+            });
+
+            $('#btnBuscarProducto').click(buscarProductos);
+
+            function buscarProductos() {
+                const term = $('#productoSearch').val();
+                if (term.length < 2) return;
+
+                $.get('/Ventas/BuscarProductos', { term: term }, function (data) {
+                    const results = $('#productoResults');
+                    results.empty();
+                    
+                    if (data.length === 0) {
+                        results.append('<div class="list-group-item">No se encontraron productos</div>');
+                    } else {
+                        data.forEach(producto => {
+                            const item = $(`
+                                <button type="button" class="list-group-item list-group-item-action" 
+                                        data-id="${producto.id}" 
+                                        data-nombre="${producto.nombre}"
+                                        data-precio="${producto.precio}">
+                                    ${producto.nombre} - $${producto.precio.toFixed(2)}
+                                </button>
+                            `);
+                            item.click(function() {
+                                seleccionarProducto(producto);
+                                results.hide();
+                            });
+                            results.append(item);
+                        });
+                    }
+                    results.show();
+                });
+            }
+
+            function seleccionarProducto(producto) {
+                $('#productoSearch').val(producto.nombre);
+                $('#productoPrecio').val(producto.precio);
+                $('#productoSearch').data('producto', producto);
+            }
+
+            // Agregar producto al detalle
+            $('#btnAgregarProducto').click(function() {
+                const producto = $('#productoSearch').data('producto');
+                const cantidad = parseInt($('#productoCantidad').val());
+                const precioUnitario = parseFloat($('#productoPrecio').val());
+
+                if (!producto || !cantidad || !precioUnitario) {
+                    alert('Por favor complete todos los campos del producto');
+                    return;
+                }
+
+                agregarProductoADetalle({
+                    productoId: producto.id,
+                    nombre: producto.nombre,
+                    cantidad: cantidad,
+                    precioUnitario: precioUnitario
+                });
+
+                // Limpiar campos
+                $('#productoSearch').val('').removeData('producto');
+                $('#productoCantidad').val(1);
+                $('#productoPrecio').val('');
+            });
+
+            function agregarProductoADetalle(detalle) {
+                const index = detalles.findIndex(d => d.productoId === detalle.productoId);
+                
+                if (index >= 0) {
+                    // Actualizar cantidad si el producto ya existe
+                    detalles[index].cantidad += detalle.cantidad;
+                } else {
+                    // Agregar nuevo producto
+                    detalle.index = nextIndex++;
+                    detalles.push(detalle);
+                }
+
+                actualizarTablaDetalles();
+            }
+
+            function actualizarTablaDetalles() {
+                const tbody = $('#detallesTable tbody');
+                tbody.empty();
+                
+                let total = 0;
+                
+                detalles.forEach(detalle => {
+                    const subtotal = detalle.cantidad * detalle.precioUnitario;
+                    total += subtotal;
+                    
+                    const row = $(`
+                        <tr data-index="${detalle.index}">
+                            <td>${detalle.nombre}</td>
+                            <td>${detalle.cantidad}</td>
+                            <td>$${detalle.precioUnitario.toFixed(2)}</td>
+                            <td>$${subtotal.toFixed(2)}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-danger btnEliminarProducto">Eliminar</button>
+                            </td>
+                            <input type="hidden" name="Pedido.Detalles[${detalle.index}].ProductoId" value="${detalle.productoId}">
+                            <input type="hidden" name="Pedido.Detalles[${detalle.index}].Cantidad" value="${detalle.cantidad}">
+                            <input type="hidden" name="Pedido.Detalles[${detalle.index}].PrecioUnitario" value="${detalle.precioUnitario}">
+                        </tr>
+                    `);
+                    
+                    tbody.append(row);
+                });
+                
+                $('#totalVenta').text('$' + total.toFixed(2));
+            }
+
+            // Eliminar producto del detalle
+            $(document).on('click', '.btnEliminarProducto', function() {
+                const row = $(this).closest('tr');
+                const index = parseInt(row.data('index'));
+                
+                detalles = detalles.filter(d => d.index !== index);
+                actualizarTablaDetalles();
+            });
+
+            // Procesar venta
+            $('#ventaForm').submit(function(e) {
+                e.preventDefault();
+                
+                if (detalles.length === 0) {
+                    alert('Debe agregar al menos un producto');
+                    return;
+                }
+                
+                if (!$('#clienteId').val()) {
+                    alert('Debe seleccionar un cliente');
+                    return;
+                }
+                
+                if (!$('#Pedido_MetodoPagoId').val()) {
+                    alert('Debe seleccionar un método de pago');
+                    return;
+                }
+                
+                const formData = $(this).serialize();
+                
+                $.post('/Ventas/ProcesarVenta', formData, function(response) {
+                    if (response.success) {
+                        alert('Venta procesada exitosamente. ID: ' + response.pedidoId);
+                        location.reload();
+                    } else {
+                        alert('Error al procesar la venta: ' + response.message);
+                    }
+                }).fail(function(xhr) {
+                    alert('Error en la solicitud: ' + xhr.responseText);
+                });
+            });
+        });
+    </script>
+}

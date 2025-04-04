@@ -1,0 +1,258 @@
+@using proeva.Dto
+@model IEnumerable<ClienteDto>
+
+<h2>Clientes</h2>
+
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createClienteModal">
+    Crear Nuevo Cliente
+</button>
+
+<table class="table mt-3">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Dirección</th>
+            <th>Correo</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Nombre</td>
+                <td>@item.Direccion</td>
+                <td>@item.Correo</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-warning" 
+                            data-bs-toggle="modal" data-bs-target="#editClienteModal"
+                            data-id="@item.Id" data-nombre="@item.Nombre" 
+                            data-direccion="@item.Direccion" data-correo="@item.Correo">
+                        Editar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-info" 
+                            data-bs-toggle="modal" data-bs-target="#detailsClienteModal"
+                            data-id="@item.Id" data-nombre="@item.Nombre" 
+                            data-direccion="@item.Direccion" data-correo="@item.Correo">
+                        Detalles
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger delete-cliente" 
+                            data-id="@item.Id">
+                        Eliminar
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal para crear cliente -->
+<div class="modal fade" id="createClienteModal" tabindex="-1" aria-labelledby="createClienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createClienteModalLabel">Crear Nuevo Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createClienteForm" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group mb-3">
+                        <label for="Nombre" class="form-label">Nombre</label>
+                        <input type="text" id="Nombre" name="Nombre" class="form-control" required />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Nombre" data-valmsg-replace="true"></span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="Direccion" class="form-label">Dirección</label>
+                        <input type="text" id="Direccion" name="Direccion" class="form-control" required />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Direccion" data-valmsg-replace="true"></span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="Correo" class="form-label">Correo Electrónico</label>
+                        <input type="email" id="Correo" name="Correo" class="form-control" required />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Correo" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar cliente -->
+<div class="modal fade" id="editClienteModal" tabindex="-1" aria-labelledby="editClienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editClienteModalLabel">Editar Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editClienteForm" asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="edit_Id" name="Id" />
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group mb-3">
+                        <label for="edit_Nombre" class="form-label">Nombre</label>
+                        <input type="text" id="edit_Nombre" name="Nombre" class="form-control" required />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Nombre" data-valmsg-replace="true"></span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="edit_Direccion" class="form-label">Dirección</label>
+                        <input type="text" id="edit_Direccion" name="Direccion" class="form-control" required />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Direccion" data-valmsg-replace="true"></span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="edit_Correo" class="form-label">Correo Electrónico</label>
+                        <input type="email" id="edit_Correo" name="Correo" class="form-control" required />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Correo" data-valmsg-replace="true"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalles del cliente -->
+<div class="modal fade" id="detailsClienteModal" tabindex="-1" aria-labelledby="detailsClienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsClienteModalLabel">Detalles del Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row">
+                    <dt class="col-sm-4">ID:</dt>
+                    <dd class="col-sm-8" id="details_Id"></dd>
+                    
+                    <dt class="col-sm-4">Nombre:</dt>
+                    <dd class="col-sm-8" id="details_Nombre"></dd>
+                    
+                    <dt class="col-sm-4">Dirección:</dt>
+                    <dd class="col-sm-8" id="details_Direccion"></dd>
+                    
+                    <dt class="col-sm-4">Correo:</dt>
+                    <dd class="col-sm-8" id="details_Correo"></dd>
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Configuración para manejar el formulario de creación
+            $('#createClienteForm').submit(function (e) {
+                e.preventDefault();
+                submitForm($(this), function() {
+                    $('#createClienteModal').modal('hide');
+                    location.reload();
+                });
+            });
+
+            // Configuración para manejar el formulario de edición
+            $('#editClienteForm').submit(function (e) {
+                e.preventDefault();
+                submitForm($(this), function() {
+                    $('#editClienteModal').modal('hide');
+                    location.reload();
+                });
+            });
+
+            // Función genérica para enviar formularios
+            function submitForm(form, onSuccess) {
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            onSuccess();
+                        } else {
+                            handleErrors(response);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert('Error al procesar la solicitud: ' + xhr.statusText);
+                    }
+                });
+            }
+
+            // Manejo de errores
+            function handleErrors(response) {
+                if (response.errors) {
+                    $('[data-valmsg-for]').text('');
+                    $.each(response.errors, function (key, value) {
+                        if (value) {
+                            $('[data-valmsg-for="' + key + '"]').text(value);
+                        }
+                    });
+                }
+                if (response.message) {
+                    alert(response.message);
+                }
+            }
+
+            // Evento para cargar datos en el modal de edición
+            $('#editClienteModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                $('#edit_Id').val(button.data('id'));
+                $('#edit_Nombre').val(button.data('nombre'));
+                $('#edit_Direccion').val(button.data('direccion'));
+                $('#edit_Correo').val(button.data('correo'));
+            });
+
+            // Evento para cargar datos en el modal de detalles
+            $('#detailsClienteModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                $('#details_Id').text(button.data('id'));
+                $('#details_Nombre').text(button.data('nombre'));
+                $('#details_Direccion').text(button.data('direccion'));
+                $('#details_Correo').text(button.data('correo'));
+            });
+
+            // Eliminar cliente
+            $('.delete-cliente').click(function() {
+                if (confirm('¿Está seguro que desea eliminar este cliente?')) {
+                    var id = $(this).data('id');
+                    $.ajax({
+                        url: '@Url.Action("Delete", "Clientes")/' + id,
+                        type: 'POST',
+                        data: {
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                location.reload();
+                            } else {
+                                alert(response.message);
+                            }
+                        },
+                        error: function(xhr) {
+                            alert('Error al eliminar el cliente: ' + xhr.statusText);
+                        }
+                    });
+                }
+            });
+
+            // Limpiar modales al cerrar
+            $('.modal').on('hidden.bs.modal', function () {
+                $(this).find('form')[0].reset();
+                $(this).find('.text-danger').text('');
+            });
+        });
+    </script>
+}

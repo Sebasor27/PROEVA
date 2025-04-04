@@ -1,0 +1,67 @@
+@model Pedido
+
+<h2>Detalles de Venta</h2>
+
+<div>
+    <h4>Pedido #@Model.Id</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            Fecha
+        </dt>
+        <dd class="col-sm-10">
+            @(Convert.ToDateTime(Model.Fecha).ToString("g"))
+        </dd>
+        <dt class="col-sm-2">
+            Cliente
+        </dt>
+        <dd class="col-sm-10">
+            @Model.Cliente.Nombre
+        </dd>
+        <dt class="col-sm-2">
+            Método de Pago
+        </dt>
+        <dd class="col-sm-10">
+            @Model.MetodoPago.Metodo
+        </dd>
+        <dt class="col-sm-2">
+            Estado
+        </dt>
+        <dd class="col-sm-10">
+            @Model.Estado
+        </dd>
+    </dl>
+</div>
+
+<h4>Productos</h4>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio Unitario</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var detalle in Model.DetallesPedidos)
+        {
+            <tr>
+                <td>@detalle.Producto.Nombre</td>
+                <td>@detalle.Cantidad</td>
+                <td>@detalle.PrecioUnitario.ToString("C")</td>
+                <td>@((detalle.Cantidad * detalle.PrecioUnitario).ToString("C"))</td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="3" class="text-right"><strong>Total:</strong></td>
+            <td>@Model.DetallesPedidos.Sum(d => d.Cantidad * d.PrecioUnitario).ToString("C")</td>
+        </tr>
+    </tfoot>
+</table>
+
+<div>
+    <a asp-action="Index" class="btn btn-secondary">Volver a la lista</a>
+</div>
